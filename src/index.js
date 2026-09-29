@@ -83,7 +83,7 @@ const EXPLAINS = {
   '不动（贵）': '收益率偏低，同时短期协议收入未强于30日趋势。',
 };
 
-function buildSnapshot(rev, cg) {
+async function buildSnapshot(rev, cg) {
   const rows = rev.totalDataChartBreakdown;
   if (!rows || !rows.length) throw new Error('empty llama payload');
 
@@ -118,7 +118,42 @@ function buildSnapshot(rev, cg) {
   const direction = dirPct > 0.05 ? '在涨' : dirPct < -0.05 ? '在跌' : '走平';
 
   const price = cg || {};
-  const fdv = price.fully_diluted_valuation || 0;
+  const curPrice = price.current_price || 0;
+
+  // UNI 销毁量：每日协议收入 ÷ 当日 UNI 价（收入能买多少 UNI 即视作销毁多少）
+  // 价格曲线一次拉全，缺的天用时间最接近的价格点补
+  let totalBurned = 0;
+  if (ytdRows.length && curPrice > 0) {
+    try {
+      const cr = await fetch(
+        `https://coins.llama.fi/chart/coingecko:uniswap?start=${ytdRows[0][0]}&span=${ytdRows.length + 5}`
+      );
+      if (cr.ok) {
+        const cj = await cr.json();
+        const pts = cj.coins['coingecko:uniswap'].prices
+          .map((p) => [p.timestamp, p.price])
+          .sort((a, b) => a[0] - b[0]);
+        const tss = pts.map((p) => p[0]);
+        const nearest = (ts) => {
+          let lo = 0, hi = tss.length - 1;
+          while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (tss[mid] < ts) lo = mid + 1; else hi = mid;
+          }
+          const c = [lo - 1, lo].filter((i) => i >= 0 && i < tss.length);
+          const bi = c.reduce((a, b) => (Math.abs(tss[a] - ts) <= Math.abs(tss[b] - ts) ? a : b));
+          return pts[bi][1];
+        };
+        for (const r of ytdRows) {
+          const d = dayTotal(r[1]);
+          if (d > 0) totalBurned += d / nearest(r[0]);
+        }
+      }
+    } catch (e) { /* 销毁量算不出则按 0，前端显示 — */ }
+  }
+  const todayBurned = curPrice > 0 ? today / curPrice : 0;
+  const effectiveSupply = Math.max(0, UNI_TOTAL_SUPPLY - totalBurned);
+  const fdv = curPrice * effectiveSupply; // FDV 按扣减已销毁后的有效供给重算
   const mcap = price.market_cap || 0;
   const yld = fdv > 0 ? (avg30 * 365) / fdv : 0;
   const tier = tierOf(yld);
@@ -176,6 +211,7 @@ function buildSnapshot(rev, cg) {
       usd: price.current_price ?? null,
       mcap,
       fdv,
+      effectiveSupply,
       chg24h: price.price_change_percentage_24h ?? null,
       chg7d: chg7,
       chg30d: price.price_change_percentage_30d_in_currency ?? null,
@@ -201,6 +237,10 @@ function buildSnapshot(rev, cg) {
       dirPct: dirPct * 100,
       text: verdictText,
       explain: EXPLAINS[verdictText],
+    },
+    burn: {
+      today: todayBurned,   // 今日销毁（UNI）
+      total: totalBurned,   // 自打开开关以来总销毁（UNI）
     },
     yieldTable,
     divergence,
@@ -254,7 +294,7 @@ async function refreshSnapshot(env) {
     const [rr, price] = await Promise.all([fetch(LLAMA_URL), getPrice()]);
     if (!rr.ok) throw new Error(`upstream ${rr.status}`);
     const rev = await rr.json();
-    const snap = buildSnapshot(rev, price);
+    const snap = await buildSnapshot(rev, price);
     await env.CACHE.put('snapshot', JSON.stringify(snap));
     return snap;
   } catch (e) {

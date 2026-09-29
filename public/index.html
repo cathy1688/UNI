@@ -256,7 +256,11 @@
         <div class="price-row"><span class="sym">UNI</span><span class="price-big" id="pPrice">···</span></div>
         <div class="mcap-boxes">
           <div><span>流通市值</span><b id="pMcap">···</b></div>
-          <div><span>FDV</span><b id="pFdv">···</b></div>
+          <div><span>FDV（扣销毁）</span><b id="pFdv">···</b></div>
+        </div>
+        <div class="mcap-boxes" style="margin-top:10px">
+          <div><span>今日销毁</span><b id="pBurnToday">···</b></div>
+          <div><span>总销毁量</span><b id="pBurnTotal">···</b></div>
         </div>
         <div class="div-badges">
           <span class="badge" id="pChg30"></span>
@@ -272,7 +276,7 @@
       <div class="method-grid">
         <div>
           <h4>1 · 收益率档位</h4>
-          <p>主收益率 = 30天日协议收入 × 365 ÷ FDV。2% 以下偏贵，4% 起进入更便宜区。</p>
+          <p>主收益率 = 30天日协议收入 × 365 ÷ FDV。2% 以下偏贵，4% 起进入更便宜区。FDV 按现价 ×（10亿 − 总销毁量）计算。</p>
         </div>
         <div>
           <h4>2 · 收入方向</h4>
@@ -296,6 +300,12 @@ const fmtK = (v) => {
   return '$' + v.toFixed(0);
 };
 const pct = (v, d=1) => (v == null || isNaN(v)) ? '—' : (v*100).toFixed(d) + '%';
+const fmtUni = (v) => {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1e6) return (v/1e6).toFixed(2) + 'M UNI';
+  if (v >= 1e3) return (v/1e3).toFixed(1) + 'K UNI';
+  return v.toFixed(0) + ' UNI';
+};
 const CHAIN_COLORS = {
   'Robinhood Chain': '#e8a33d', 'Ethereum': '#4f9cf0', 'Base': '#2f6fed',
   'Arbitrum': '#28a0f0', 'BSC': '#f0b90b', 'Polygon': '#8247e5',
@@ -373,6 +383,9 @@ function render() {
   $('pPrice').textContent = p.usd != null ? '$' + p.usd.toFixed(2) : '—';
   $('pMcap').textContent = p.mcap ? fmtK(p.mcap) : '—';
   $('pFdv').textContent = p.fdv ? fmtK(p.fdv) : '—';
+  const bn = s.burn || {};
+  $('pBurnToday').textContent = bn.today ? fmtUni(bn.today) : '—';
+  $('pBurnTotal').textContent = bn.total ? fmtUni(bn.total) : '—';
   $('pChg30').textContent = p.chg30d != null
     ? `价格 30天 ${p.chg30d >= 0 ? '+' : ''}${p.chg30d.toFixed(1)}%` : '价格 30天 —';
   $('pDiv').textContent = `收入 7d vs 30d ${v.dirPct >= 0 ? '+' : ''}${v.dirPct.toFixed(1)}%`;
