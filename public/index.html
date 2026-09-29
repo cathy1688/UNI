@@ -349,10 +349,10 @@ function render() {
   $('kAvg7M').textContent = '×' + k.avg7.mult.toFixed(2);
   $('kAvg30V').textContent = fmtK(k.avg30.v);
   $('kAvg30M').textContent = '×' + k.avg30.mult.toFixed(2);
-  $('kYtdL').textContent = `年初至今 · ${k.ytd.days}天`;
+  $('kYtdL').textContent = '自打开开关以来';
   $('kYtdV').textContent = fmtK(k.ytd.sum);
   $('kYtdA').textContent = fmtK(k.ytd.avg);
-  $('kYtdM').textContent = `日均 · ×${k.ytd.mult.toFixed(2)}`;
+  $('kYtdM').textContent = `${k.ytd.since || ''}起 · ${k.ytd.days}天 · 日均 · ×${k.ytd.mult.toFixed(2)}`;
   $('kRh7V').textContent = pct(k.robinhood.share7);
   $('kRh30V').textContent = pct(k.robinhood.share30);
 

@@ -22,9 +22,8 @@ const llamaHist = (ts) => `https://coins.llama.fi/prices/historical/${ts}/coinge
 const UNI_TOTAL_SUPPLY = 1e9; // UNI 总供应 10 亿固定，FDV = 现价 × 1e9
 
 // UTC 时间戳（秒）
-const AUG_START = 1785542400; // 2026-08-01T00:00:00Z
 const AUG_END = 1788220800; // 2026-09-01T00:00:00Z
-const YTD_START = 1767225600; // 2026-01-01T00:00:00Z
+const AUG_START = 1785542400; // 2026-08-01T00:00:00Z
 
 // 分链堆叠展示的主力链（按近 30 天协议收入排序），其余并入"其他"
 const TOP_CHAINS = [
@@ -106,10 +105,13 @@ function buildSnapshot(rev, cg) {
   const augRows = done.filter((r) => r[0] >= AUG_START && r[0] < AUG_END);
   const augBaseline = augRows.length ? mean(augRows.map((r) => dayTotal(r[1]))) : 0;
 
-  // 年初至今
-  const ytdRows = done.filter((r) => r[0] >= YTD_START);
+  // 自打开开关以来
+  // 自打开开关以来 = 第一个有协议收入的日子起（动态定位，不写死）
+  const switchIdx = done.findIndex((r) => dayTotal(r[1]) > 0);
+  const ytdRows = switchIdx >= 0 ? done.slice(switchIdx) : [];
   const ytdSum = ytdRows.reduce((s, r) => s + dayTotal(r[1]), 0);
   const ytdAvg = ytdRows.length ? ytdSum / ytdRows.length : 0;
+  const ytdSince = ytdRows.length ? fmtDate(ytdRows[0][0]) : null;
 
   // 收入方向：7天均值 vs 30天均值，±5% 阈值
   const dirPct = avg30 ? (avg7 - avg30) / avg30 : 0;
@@ -149,7 +151,7 @@ function buildSnapshot(rev, cg) {
     { name: '今日年化', v: ann(today) },
     { name: '7天日均年化', v: ann(avg7) },
     { name: '30天日均年化', v: ann(avg30) },
-    { name: '年初至今日均年化', v: ann(ytdAvg) },
+    { name: '开关以来日均年化', v: ann(ytdAvg) },
   ].map((r) => ({
     ...r,
     vsMcap: mcap ? r.v / mcap : 0,
@@ -187,6 +189,7 @@ function buildSnapshot(rev, cg) {
         sum: ytdSum,
         days: ytdRows.length,
         avg: ytdAvg,
+        since: ytdSince,
         mult: augBaseline ? ytdAvg / augBaseline : 0,
       },
       robinhood: { share7: rh7, share30: rh30 },
