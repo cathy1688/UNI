@@ -281,6 +281,27 @@ export default {
       return json(snap);
     }
 
+    if (url.pathname === '/api/debug' && request.method === 'GET') {
+      const out = {};
+      try {
+        const r = await fetch(LLAMA_URL);
+        out.revenue = { ok: r.ok, status: r.status, bytes: (await r.arrayBuffer()).byteLength };
+      } catch (e) { out.revenue = { error: String(e && e.message || e) }; }
+      try {
+        const r = await fetch(CG_URL, { headers: { 'user-agent': 'uni-dashboard/1.0' } });
+        out.coingecko = { ok: r.ok, status: r.status };
+      } catch (e) { out.coingecko = { error: String(e && e.message || e) }; }
+      try {
+        const r = await fetch(LLAMA_PRICE_URL);
+        out.llamaPrice = { ok: r.ok, status: r.status };
+      } catch (e) { out.llamaPrice = { error: String(e && e.message || e) }; }
+      try {
+        await env.CACHE.put('__debug', '1', { expirationTtl: 60 });
+        out.kv = { writeRead: (await env.CACHE.get('__debug')) === '1' };
+      } catch (e) { out.kv = { error: String(e && e.message || e) }; }
+      return json(out);
+    }
+
     if (url.pathname === '/api/refresh' && request.method === 'POST') {
       const snap = await refreshSnapshot(env);
       if (!snap) return json({ error: 'refresh failed, kept old snapshot' }, 502);
