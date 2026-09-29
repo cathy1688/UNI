@@ -212,18 +212,19 @@ async function getPriceFromLlama() {
     llamaHist(now - 86400),
     llamaHist(now - 7 * 86400),
     llamaHist(now - 30 * 86400),
+    'https://api.llama.fi/protocol/uniswap', // 取流通市值 mcap
   ];
   const rs = await Promise.all(urls.map((u) => fetch(u)));
   if (rs.some((r) => !r.ok)) throw new Error('llama price failed');
   const js = await Promise.all(rs.map((r) => r.json()));
   const px = (j) => j.coins['coingecko:uniswap'].price;
-  const [p0, p1, p7, p30] = js.map(px);
+  const [p0, p1, p7, p30] = js.slice(0, 4).map(px);
   if (!p0) throw new Error('llama price empty');
   const chg = (p) => (((p0 - p) / p) * 100);
   return {
     current_price: p0,
     fully_diluted_valuation: p0 * UNI_TOTAL_SUPPLY,
-    market_cap: null, // 备用源无流通市值，前端显示 —
+    market_cap: js[4].mcap || null,
     price_change_percentage_24h: chg(p1),
     price_change_percentage_7d_in_currency: chg(p7),
     price_change_percentage_30d_in_currency: chg(p30),
