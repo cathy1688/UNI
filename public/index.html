@@ -85,16 +85,21 @@
 
   /* KPI */
   .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
-  .kpi { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(20,30,50,.07); }
-  .kpi .k-label { color: #5c6b82; font-size: 13px; margin-bottom: 10px; }
-  .kpi .k-val { font-size: 26px; font-weight: 800; margin-bottom: 10px; }
-  .kpi .k-sub { font-size: 12px; color: #8d99ad; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .kpi {
+    background: #fff; border-radius: 14px; padding: 22px 14px;
+    box-shadow: 0 1px 3px rgba(20,30,50,.07);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 9px;
+  }
+  .kpi .k-label { color: #5c6b82; font-size: 13px; margin: 0; letter-spacing: .5px; }
+  .kpi .k-val { font-size: 27px; font-weight: 800; margin: 0; letter-spacing: -.5px; }
+  .kpi .k-sub { font-size: 12px; color: #8d99ad; display: flex; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap; margin: 0; line-height: 1.6; }
   .badge {
     background: #fde8ef; color: #c2255c; border-radius: 6px;
     padding: 2px 8px; font-weight: 700; font-size: 12px;
   }
   .badge.gray { background: #eef2f7; color: #5c6b82; }
-  .rh-row { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 2px; }
+  .rh-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 4px; width: 100%; }
   .rh-row + .rh-row { border-top: 1px solid #edf1f6; }
   .rh-row span { color: #5c6b82; font-size: 14px; }
   .rh-row b { font-size: 22px; font-weight: 800; }
