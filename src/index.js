@@ -147,9 +147,9 @@ function buildSnapshot(rev, cg) {
   const ann = (v) => v * 365;
   const yieldTable = [
     { name: '今日年化', v: ann(today) },
-    { name: '7天年化', v: ann(avg7) },
-    { name: '30天年化', v: ann(avg30) },
-    { name: '8月基线年化', v: ann(augBaseline) },
+    { name: '7天日均年化', v: ann(avg7) },
+    { name: '30天日均年化', v: ann(avg30) },
+    { name: '年初至今日均年化', v: ann(ytdAvg) },
   ].map((r) => ({
     ...r,
     vsMcap: mcap ? r.v / mcap : 0,
