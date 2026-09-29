@@ -352,7 +352,7 @@ function render() {
   $('kYtdL').textContent = '自打开开关以来';
   $('kYtdV').textContent = fmtK(k.ytd.sum);
   $('kYtdA').textContent = fmtK(k.ytd.avg);
-  $('kYtdM').textContent = `${k.ytd.since || ''}起 · ${k.ytd.days}天 · 日均 · ×${k.ytd.mult.toFixed(2)}`;
+  $('kYtdM').textContent = `${k.ytd.days}天 · 日均 · ×${k.ytd.mult.toFixed(2)}`;
   $('kRh7V').textContent = pct(k.robinhood.share7);
   $('kRh30V').textContent = pct(k.robinhood.share30);
 
