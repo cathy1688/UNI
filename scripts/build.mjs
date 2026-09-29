@@ -11,7 +11,7 @@ const html = readFileSync(join(root, 'public/index.html'), 'utf8');
 const PLACEHOLDER = '"__UNI_INDEX_HTML__"';
 if (!src.includes(PLACEHOLDER)) throw new Error('placeholder not found in src/index.js');
 
-const out = src.replace(PLACEHOLDER, JSON.stringify(html));
+const out = src.replace(PLACEHOLDER, () => JSON.stringify(html));
 mkdirSync(join(root, 'dist'), { recursive: true });
 writeFileSync(join(root, 'dist/index.js'), out);
 console.log(`built dist/index.js (${out.length} bytes)`);
