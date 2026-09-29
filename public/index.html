@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UNI 监控面板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --card: #131926;
+    --card2: #182031;
+    --border: #232d42;
+    --text: #e8edf5;
+    --muted: #9aa4b8;
+    --faint: #5d687d;
+    --green: #34d17b;
+    --red: #f0524f;
+    --amber: #e8a33d;
+    --gold: #d9a441;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    padding: 24px 20px 40px;
+  }
+  #app { max-width: 1240px; margin: 0 auto; }
+  header.top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  header.top h1 { font-size: 26px; letter-spacing: 1px; }
+  header.top .tagline { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .meta { text-align: right; font-size: 12px; color: var(--faint); }
+  .meta button {
+    margin-top: 8px; background: var(--card2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 16px; font-size: 13px; cursor: pointer;
+  }
+  .meta button:hover { border-color: var(--gold); }
+  .meta button:disabled { opacity: 0.5; cursor: default; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; margin-bottom: 14px; letter-spacing: 1px; }
+  .note { font-size: 12px; color: var(--faint); margin-top: 10px; }
+
+  /* 结论区 */
+  .verdict { display: grid; grid-template-columns: 1fr 1.5fr; gap: 28px; align-items: center; }
+  .v-label { font-size: 13px; color: var(--muted); margin-bottom: 10px; letter-spacing: 2px; }
+  .v-text { font-size: 56px; font-weight: 800; letter-spacing: 2px; line-height: 1.15; }
+  .v-explain { color: var(--muted); font-size: 14px; margin-top: 12px; line-height: 1.7; }
+  .v-right { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .metric {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 20px; text-align: center;
+  }
+  .m-label { font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-bottom: 14px; }
+  .m-value { font-size: 36px; font-weight: 700; line-height: 1.2; }
+  .m-sub { font-size: 14px; color: var(--faint); font-weight: 400; margin-top: 8px; }
+
+  /* KPI 一行五卡 */
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 16px;
+  }
+  .kpi .k-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 10px; }
+  .kpi .k-value { font-size: 24px; font-weight: 700; }
+  .kpi .k-sub { font-size: 12px; color: var(--faint); margin-top: 8px; }
+  .kpi .k-sub b { color: var(--gold); font-weight: 600; }
+
+  /* 图表 */
+  .sec-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 10px; }
+  .sec-head h2 { margin-bottom: 0; }
+  .tabs { display: flex; gap: 8px; }
+  .tabs button {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+  }
+  .tabs button.on { background: var(--gold); border-color: var(--gold); color: #111; font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: right; padding: 12px 8px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.hl { color: var(--gold); font-weight: 600; }
+
+  .div-meta { font-size: 13px; color: var(--muted); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .div-text { font-size: 15px; line-height: 1.8; }
+  .div-text.warn { color: var(--amber); }
+
+  footer { text-align: center; color: var(--faint); font-size: 12px; margin-top: 24px; }
+  .err { background: #2a1518; border: 1px solid #5a2326; color: #f08a88; border-radius: 12px; padding: 24px; text-align: center; }
+
+  @media (max-width: 960px) {
+    .verdict { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+    .v-text { font-size: 42px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div>
+      <h1>UNI 监控面板</h1>
+      <p class="tagline">让我知道什么时候买不贵</p>
+    </div>
+    <div class="meta">
+      <div id="metaTime">加载中…</div>
+      <button id="btnRefresh">立即刷新</button>
+    </div>
+  </header>
+
+  <div id="errBox"></div>
+
+  <section class="card verdict">
+    <div class="v-left">
+      <div class="v-label">当前结论</div>
+      <div class="v-text" id="vText">…</div>
+      <div class="v-explain" id="vExplain">…</div>
+    </div>
+    <div class="v-right">
+      <div class="metric">
+        <div class="m-label">主收益率</div>
+        <div class="m-value" id="mYield">…</div>
+      </div>
+      <div class="metric">
+        <div class="m-label">估值档位</div>
+        <div class="m-value" id="mTier">…</div>
+      </div>
+      <div class="metric">
+        <div class="m-label">收入方向</div>
+        <div class="m-value" id="mDir">…</div>
+        <div class="m-sub" id="mDirSub"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="card">
+    <div class="sec-head">
+      <h2>协议收入</h2>
+      <div class="tabs" id="tabs">
+        <button data-w="7d">7天</button>
+        <button data-w="30d" class="on">30天</button>
+        <button data-w="90d">90天</button>
+        <button data-w="all">打开开关以来</button>
+      </div>
+    </div>
+    <div id="chart" style="height: 420px;"></div>
+    <p class="note">分链堆叠为协议收入口径；UTC 当天未完成数据已排除；灰色虚线为 8 月基线。</p>
+  </section>
+
+  <section class="grid2">
+    <div class="card" style="margin-bottom:0">
+      <h2>收入年化收益率</h2>
+      <p class="note" id="mcapLine" style="margin:0 0 6px"></p>
+      <table id="yTable">
+        <thead><tr><th>口径</th><th>年化收入</th><th>÷ 流通市值</th><th>÷ FDV</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <h2>主收益率</h2>
+      <div id="gauge" style="height: 250px;"></div>
+      <p class="note">主收益率 = 30天日均协议收入 × 365 ÷ FDV</p>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <h2>价格与收入</h2>
+    <div class="div-meta" id="priceMeta"></div>
+    <div class="div-text" id="divText"></div>
+  </section>
+
+  <footer>每小时整点自动刷新 · 数据源 DeFiLlama / CoinGecko</footer>
+</div>
+
+<script>
+let SNAP = null, chart = null, gaugeChart = null, curWin = '30d';
+const CHAIN_ORDER = ['Robinhood Chain', 'Ethereum', 'Base', 'Arbitrum', 'BSC', 'Polygon', 'OP Mainnet', '其他'];
+const CHAIN_COLORS = {
+  'Robinhood Chain': '#e8a33d', 'Ethereum': '#4f9cf0', 'Base': '#2f6fed',
+  'Arbitrum': '#28a0f0', 'BSC': '#f0b90b', 'Polygon': '#8247e5',
+  'OP Mainnet': '#ff0420', '其他': '#3a455c'
+};
+
+const fmtM = (v) => {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+  return '$' + v.toFixed(0);
+};
+const fmtPct = (v, d = 1) => (v == null || isNaN(v)) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(d) + '%';
+const fmtMult = (v) => '×' + v.toFixed(2);
+
+const VERDICT_COLOR = {
+  '可以买（不贵）': '#34d17b',
+  '便宜但动量弱，等企稳或分批': '#34d17b',
+  '合理，等回调': '#e8a33d',
+  '不动': '#9aa4b8',
+  '不动，等回调': '#e8a33d',
+  '不动（贵）': '#f0524f'
+};
+
+async function load() {
+  const r = await fetch('/api/snapshot');
+  const j = await r.json();
+  if (j.error) {
+    document.getElementById('errBox').innerHTML =
+      `<div class="err">数据暂不可用：${j.error}，请稍后点击"立即刷新"重试。</div>`;
+    return;
+  }
+  SNAP = j;
+  renderAll();
+}
+
+function renderAll() {
+  const s = SNAP, v = s.verdict;
+  // header
+  const ft = new Date(s.fetchedAt);
+  const bj = ft.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  document.getElementById('metaTime').textContent = `完整数据截至 ${s.d0} UTC · 抓取 ${bj}（北京）`;
+
+  // 结论区
+  const vc = VERDICT_COLOR[v.text] || '#e8edf5';
+  const vText = document.getElementById('vText');
+  vText.textContent = v.text;
+  vText.style.color = vc;
+  document.getElementById('vExplain').textContent = v.explain;
+  document.getElementById('mYield').textContent = v.yieldPct.toFixed(2) + '%';
+  document.getElementById('mYield').style.color = vc;
+  document.getElementById('mTier').textContent = v.tier;
+  document.getElementById('mDir').textContent = v.direction;
+  document.getElementById('mDir').style.color = v.direction === '在涨' ? '#34d17b' : v.direction === '在跌' ? '#f0524f' : '#9aa4b8';
+  const dp = v.dirPct;
+  document.getElementById('mDirSub').textContent = `7天相对30天 ${dp > 0 ? '+' : ''}${dp.toFixed(1)}%`;
+
+  // KPI 一行五卡
+  const k = s.kpi;
+  const cards = [
+    { label: `今日 · ${s.d0.slice(5)}`, value: fmtM(k.today.v), sub: `<b>${fmtMult(k.today.mult)}</b> 相对8月基线` },
+    { label: '7天日均', value: fmtM(k.avg7.v), sub: `<b>${fmtMult(k.avg7.mult)}</b> 相对8月基线` },
+    { label: '30天日均', value: fmtM(k.avg30.v), sub: `<b>${fmtMult(k.avg30.mult)}</b> 相对8月基线` },
+    { label: '年初至今', value: fmtM(k.ytd.sum), sub: `${k.ytd.days}天 · 日均${fmtM(k.ytd.avg)} · <b>${fmtMult(k.ytd.mult)}</b>` },
+    { label: 'Robinhood 收入占比', value: (k.robinhood.share30 * 100).toFixed(1) + '%', sub: `7天 ${(k.robinhood.share7 * 100).toFixed(1)}% · 30天 ${(k.robinhood.share30 * 100).toFixed(1)}%` },
+  ];
+  document.getElementById('kpis').innerHTML = cards.map(c =>
+    `<div class="kpi"><div class="k-label">${c.label}</div><div class="k-value">${c.value}</div><div class="k-sub">${c.sub}</div></div>`
+  ).join('');
+
+  renderChart();
+  renderTable();
+  renderGauge();
+  renderDivergence();
+}
+
+function winLen() {
+  const n = SNAP.series.dates.length;
+  return curWin === '7d' ? 7 : curWin === '30d' ? 30 : curWin === '90d' ? 90 : n;
+}
+
+function renderChart() {
+  const s = SNAP, n = winLen();
+  const dates = s.series.dates.slice(-n).map(d => d.slice(5));
+  const series = CHAIN_ORDER
+    .filter(ch => s.series.chains[ch])
+    .map(ch => ({
+      name: ch, type: 'bar', stack: 'rev',
+      data: s.series.chains[ch].slice(-n),
+      itemStyle: { color: CHAIN_COLORS[ch] },
+      emphasis: { focus: 'series' }
+    }));
+  series.push({
+    name: '7天均线', type: 'line', data: s.series.ma7.slice(-n),
+    lineStyle: { color: '#34d17b', width: 2 }, symbol: 'none', smooth: true
+  });
+  series.push({
+    name: '30天均线', type: 'line', data: s.series.ma30.slice(-n),
+    lineStyle: { color: '#e8a33d', width: 2 }, symbol: 'none', smooth: true
+  });
+  series.push({
+    name: '8月基线', type: 'line', data: new Array(n).fill(Math.round(s.augBaseline)),
+    lineStyle: { color: '#8b94a7', width: 1.5, type: 'dashed' }, symbol: 'none'
+  });
+
+  if (!chart) chart = echarts.init(document.getElementById('chart'));
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#182031', borderColor: '#232d42', textStyle: { color: '#e8edf5' },
+      valueFormatter: (v) => v == null ? '—' : fmtM(v)
+    },
+    legend: {
+      textStyle: { color: '#9aa4b8' }, top: 0,
+      type: 'scroll', pageTextStyle: { color: '#9aa4b8' }
+    },
+    grid: { left: 56, right: 12, top: 40, bottom: 28 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#5d687d', fontSize: 11 } },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#5d687d', formatter: (v) => v >= 1e6 ? (v / 1e6) + 'M' : (v / 1e3) + 'K' },
+      splitLine: { lineStyle: { color: '#1a2233' } }
+    },
+    series
+  }, true);
+}
+
+function renderTable() {
+  const s = SNAP;
+  document.getElementById('mcapLine').textContent =
+    `流通市值 ${fmtM(s.price.mcap)} · FDV ${fmtM(s.price.fdv)} · UNI $${s.price.usd != null ? s.price.usd.toFixed(2) : '—'}`;
+  const tb = document.querySelector('#yTable tbody');
+  tb.innerHTML = s.yieldTable.map((r, i) => `
+    <tr>
+      <td>${r.name}</td>
+      <td>${fmtM(r.v)}</td>
+      <td class="${i === 2 ? 'hl' : ''}">${(r.vsMcap * 100).toFixed(2)}%</td>
+      <td class="${i === 2 ? 'hl' : ''}">${(r.vsFdv * 100).toFixed(2)}%</td>
+    </tr>`).join('');
+}
+
+function renderGauge() {
+  const y = SNAP.verdict.yieldPct;
+  if (!gaugeChart) gaugeChart = echarts.init(document.getElementById('gauge'));
+  gaugeChart.setOption({
+    backgroundColor: 'transparent',
+    series: [{
+      type: 'gauge', min: 0, max: 8,
+      progress: { show: false },
+      axisLine: {
+        lineStyle: {
+          width: 20,
+          color: [[0.25, '#f0524f'], [0.375, '#e8a33d'], [0.5, '#d9c93d'], [0.75, '#7fc96b'], [1, '#34d17b']]
+        }
+      },
+      axisTick: { show: false }, splitLine: { show: false },
+      axisLabel: { color: '#5d687d', fontSize: 11, formatter: (v) => v + '%' },
+      pointer: { itemStyle: { color: '#e8edf5' } },
+      anchor: { show: true, itemStyle: { color: '#e8edf5' } },
+      detail: { valueAnimation: true, formatter: '{value}%', color: '#e8edf5', fontSize: 30, fontWeight: 700, offsetCenter: [0, '55%'] },
+      title: { show: false },
+      data: [{ value: +y.toFixed(2) }]
+    }]
+  }, true);
+}
+
+function renderDivergence() {
+  const p = SNAP.price;
+  document.getElementById('priceMeta').textContent =
+    `UNI $${p.usd != null ? p.usd.toFixed(2) : '—'} · 7天 ${fmtPct(p.chg7d)} · 30天 ${fmtPct(p.chg30d)}`;
+  const el = document.getElementById('divText');
+  el.textContent = SNAP.divergence;
+  el.classList.toggle('warn', /背离/.test(SNAP.divergence));
+}
+
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  curWin = b.dataset.w;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  renderChart();
+});
+
+document.getElementById('btnRefresh').addEventListener('click', async (e) => {
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = '刷新中…';
+  try {
+    const r = await fetch('/api/refresh', { method: 'POST' });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'refresh failed');
+    await load();
+  } catch (err) {
+    alert('刷新失败：' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '立即刷新';
+  }
+});
+
+window.addEventListener('resize', () => { chart && chart.resize(); gaugeChart && gaugeChart.resize(); });
+
+load();
+</script>
+</body>
+</html>
