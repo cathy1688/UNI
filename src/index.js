@@ -152,7 +152,9 @@ async function buildSnapshot(rev, cg) {
     } catch (e) { /* 销毁量算不出则按 0，前端显示 — */ }
   }
   const todayBurned = curPrice > 0 ? today / curPrice : 0;
-  const effectiveSupply = Math.max(0, UNI_TOTAL_SUPPLY - totalBurned);
+  const TREASURY_BURN = 100_000_000; // UNIfication（2025年12月）一次性国库销毁
+  const totalBurnedAll = totalBurned + TREASURY_BURN;
+  const effectiveSupply = Math.max(0, UNI_TOTAL_SUPPLY - totalBurnedAll);
   const fdv = curPrice * effectiveSupply; // FDV 按扣减已销毁后的有效供给重算
   const mcap = price.market_cap || 0;
   const yld = fdv > 0 ? (avg30 * 365) / fdv : 0;
@@ -239,8 +241,10 @@ async function buildSnapshot(rev, cg) {
       explain: EXPLAINS[verdictText],
     },
     burn: {
-      today: todayBurned,   // 今日销毁（UNI）
-      total: totalBurned,   // 自打开开关以来总销毁（UNI）
+      today: todayBurned,          // 今日销毁（UNI）
+      total: totalBurnedAll,       // 总销毁 = 收入累计销毁 + 国库一次性销毁（UNI）
+      fromRevenue: totalBurned,   // 其中：协议收入累计销毁
+      fromTreasury: TREASURY_BURN, // 其中：国库一次性销毁
     },
     yieldTable,
     divergence,

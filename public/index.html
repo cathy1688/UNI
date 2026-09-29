@@ -276,7 +276,7 @@
       <div class="method-grid">
         <div>
           <h4>1 · 收益率档位</h4>
-          <p>主收益率 = 30天日协议收入 × 365 ÷ FDV。2% 以下偏贵，4% 起进入更便宜区。FDV 按现价 ×（10亿 − 总销毁量）计算。</p>
+          <p>主收益率 = 30天日协议收入 × 365 ÷ FDV。2% 以下偏贵，4% 起进入更便宜区。FDV 按现价 ×（10亿 − 总销毁量）计算，总销毁含 UNIfication 国库一次性销毁 1 亿枚。</p>
         </div>
         <div>
           <h4>2 · 收入方向</h4>
@@ -386,6 +386,9 @@ function render() {
   const bn = s.burn || {};
   $('pBurnToday').textContent = bn.today ? fmtUni(bn.today) : '—';
   $('pBurnTotal').textContent = bn.total ? fmtUni(bn.total) : '—';
+  if (bn.total) {
+    $('pBurnTotal').title = `收入累计销毁 ${fmtUni(bn.fromRevenue)} + 国库一次性销毁 ${fmtUni(bn.fromTreasury)}`;
+  }
   $('pChg30').textContent = p.chg30d != null
     ? `价格 30天 ${p.chg30d >= 0 ? '+' : ''}${p.chg30d.toFixed(1)}%` : '价格 30天 —';
   $('pDiv').textContent = `收入 7d vs 30d ${v.dirPct >= 0 ? '+' : ''}${v.dirPct.toFixed(1)}%`;
