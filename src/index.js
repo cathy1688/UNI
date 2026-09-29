@@ -9,6 +9,9 @@
  * 抓取失败时 try/catch，保留 KV 中的旧快照，不覆盖。
  */
 
+// 构建时由 scripts/build.mjs 注入 public/index.html 的完整内容
+const INDEX_HTML = "__UNI_INDEX_HTML__";
+
 const LLAMA_URL = 'https://api.llama.fi/summary/fees/uniswap?dataType=dailyRevenue';
 const CG_URL =
   'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=uniswap&price_change_percentage=7d,30d';
@@ -240,7 +243,9 @@ export default {
       return json({ ok: true, fetchedAt: snap.fetchedAt });
     }
 
-    // 静态前端
-    return env.ASSETS.fetch(request);
+    // 静态前端（构建时已内联进 INDEX_HTML，不再依赖 ASSETS 绑定）
+    return new Response(INDEX_HTML, {
+      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
+    });
   },
 };
