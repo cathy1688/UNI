@@ -123,6 +123,7 @@ async function buildSnapshot(rev, cg) {
   // UNI 销毁量：每日协议收入 ÷ 当日 UNI 价（收入能买多少 UNI 即视作销毁多少）
   // 价格曲线一次拉全，缺的天用时间最接近的价格点补
   let totalBurned = 0;
+  let todayBurned = 0;
   if (ytdRows.length && curPrice > 0) {
     try {
       const cr = await fetch(
@@ -148,10 +149,13 @@ async function buildSnapshot(rev, cg) {
           const d = dayTotal(r[1]);
           if (d > 0) totalBurned += d / nearest(r[0]);
         }
+        // 今日销毁用当日（最新完整日）自己的价格，与历史口径一致
+        const last = ytdRows[ytdRows.length - 1];
+        todayBurned = dayTotal(last[1]) / nearest(last[0]);
       }
     } catch (e) { /* 销毁量算不出则按 0，前端显示 — */ }
+    if (!todayBurned && today > 0) todayBurned = today / curPrice; // 兜底
   }
-  const todayBurned = curPrice > 0 ? today / curPrice : 0;
   const TREASURY_BURN = 100_000_000; // UNIfication（2025年12月）一次性国库销毁
   const totalBurnedAll = totalBurned + TREASURY_BURN;
   const effectiveSupply = Math.max(0, UNI_TOTAL_SUPPLY - totalBurnedAll);

@@ -259,7 +259,7 @@
           <div><span>FDV（扣销毁）</span><b id="pFdv">···</b></div>
         </div>
         <div class="mcap-boxes" style="margin-top:10px">
-          <div><span>今日销毁</span><b id="pBurnToday">···</b></div>
+          <div><span id="pBurnTodayL">今日销毁</span><b id="pBurnToday">···</b></div>
           <div><span>总销毁量</span><b id="pBurnTotal">···</b></div>
         </div>
         <div class="div-badges">
@@ -384,6 +384,7 @@ function render() {
   $('pMcap').textContent = p.mcap ? fmtK(p.mcap) : '—';
   $('pFdv').textContent = p.fdv ? fmtK(p.fdv) : '—';
   const bn = s.burn || {};
+  $('pBurnTodayL').textContent = s.d0 ? s.d0.slice(5).replace('-', '/') + ' 销毁' : '今日销毁';
   $('pBurnToday').textContent = bn.today ? fmtUni(bn.today) : '—';
   $('pBurnTotal').textContent = bn.total ? fmtUni(bn.total) : '—';
   if (bn.total) {
