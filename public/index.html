@@ -94,6 +94,10 @@
     padding: 2px 8px; font-weight: 700; font-size: 12px;
   }
   .badge.gray { background: #eef2f7; color: #5c6b82; }
+  .rh-row { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 2px; }
+  .rh-row + .rh-row { border-top: 1px solid #edf1f6; }
+  .rh-row span { color: #5c6b82; font-size: 14px; }
+  .rh-row b { font-size: 22px; font-weight: 800; }
 
   /* 双列 */
   .cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; margin-bottom: 18px; }
@@ -223,8 +227,8 @@
       </div>
       <div class="kpi">
         <div class="k-label">Robinhood 收入占比</div>
-        <div class="k-sub"><span style="color:#5c6b82">7天</span><b style="color:#1c2333;font-size:16px" id="kRh7V"></b></div>
-        <div class="k-sub" style="margin-top:10px"><span style="color:#5c6b82">30天</span><b style="color:#1c2333;font-size:16px" id="kRh30V"></b></div>
+        <div class="rh-row"><span>7天</span><b id="kRh7V">···</b></div>
+        <div class="rh-row"><span>30天</span><b id="kRh30V">···</b></div>
       </div>
     </section>
 
