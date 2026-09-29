@@ -16,6 +16,11 @@ const LLAMA_URL = 'https://api.llama.fi/summary/fees/uniswap?dataType=dailyReven
 const CG_URL =
   'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=uniswap&price_change_percentage=7d,30d';
 
+// DeFiLlama 价格备用源（CoinGecko 常屏蔽数据中心 IP）
+const LLAMA_PRICE_URL = 'https://coins.llama.fi/prices/current/coingecko:uniswap';
+const llamaHist = (ts) => `https://coins.llama.fi/prices/historical/${ts}/coingecko:uniswap`;
+const UNI_TOTAL_SUPPLY = 1e9; // UNI 总供应 10 亿固定，FDV = 现价 × 1e9
+
 // UTC 时间戳（秒）
 const AUG_START = 1785542400; // 2026-08-01T00:00:00Z
 const AUG_END = 1788220800; // 2026-09-01T00:00:00Z
@@ -200,13 +205,52 @@ function buildSnapshot(rev, cg) {
   };
 }
 
+async function getPriceFromLlama() {
+  const now = Math.floor(Date.now() / 1000);
+  const urls = [
+    LLAMA_PRICE_URL,
+    llamaHist(now - 86400),
+    llamaHist(now - 7 * 86400),
+    llamaHist(now - 30 * 86400),
+  ];
+  const rs = await Promise.all(urls.map((u) => fetch(u)));
+  if (rs.some((r) => !r.ok)) throw new Error('llama price failed');
+  const js = await Promise.all(rs.map((r) => r.json()));
+  const px = (j) => j.coins['coingecko:uniswap'].price;
+  const [p0, p1, p7, p30] = js.map(px);
+  if (!p0) throw new Error('llama price empty');
+  const chg = (p) => (((p0 - p) / p) * 100);
+  return {
+    current_price: p0,
+    fully_diluted_valuation: p0 * UNI_TOTAL_SUPPLY,
+    market_cap: null, // 备用源无流通市值，前端显示 —
+    price_change_percentage_24h: chg(p1),
+    price_change_percentage_7d_in_currency: chg(p7),
+    price_change_percentage_30d_in_currency: chg(p30),
+  };
+}
+
+// 价格：优先 CoinGecko（带完整市值），被屏蔽时降级到 DeFiLlama
+async function getPrice() {
+  try {
+    const r = await fetch(CG_URL, { headers: { 'user-agent': 'uni-dashboard/1.0' } });
+    if (r.ok) {
+      const arr = await r.json();
+      if (Array.isArray(arr) && arr[0] && arr[0].current_price) return arr[0];
+    }
+  } catch {}
+  try {
+    return await getPriceFromLlama();
+  } catch {}
+  return null;
+}
+
 async function refreshSnapshot(env) {
   try {
-    const [rr, cr] = await Promise.all([fetch(LLAMA_URL), fetch(CG_URL)]);
-    if (!rr.ok || !cr.ok) throw new Error(`upstream ${rr.status}/${cr.status}`);
+    const [rr, price] = await Promise.all([fetch(LLAMA_URL), getPrice()]);
+    if (!rr.ok) throw new Error(`upstream ${rr.status}`);
     const rev = await rr.json();
-    const cgArr = await cr.json();
-    const snap = buildSnapshot(rev, Array.isArray(cgArr) ? cgArr[0] : null);
+    const snap = buildSnapshot(rev, price);
     await env.CACHE.put('snapshot', JSON.stringify(snap));
     return snap;
   } catch (e) {
