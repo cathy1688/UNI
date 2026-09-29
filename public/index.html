@@ -99,7 +99,8 @@
     padding: 2px 8px; font-weight: 700; font-size: 12px;
   }
   .badge.gray { background: #eef2f7; color: #5c6b82; }
-  .rh-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 4px; width: 100%; }
+  .rh-body { width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .rh-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 4px; width: 100%; }
   .rh-row + .rh-row { border-top: 1px solid #edf1f6; }
   .rh-row span { color: #5c6b82; font-size: 14px; }
   .rh-row b { font-size: 22px; font-weight: 800; }
@@ -232,8 +233,10 @@
       </div>
       <div class="kpi">
         <div class="k-label">Robinhood 收入占比</div>
-        <div class="rh-row"><span>7天</span><b id="kRh7V">···</b></div>
-        <div class="rh-row"><span>30天</span><b id="kRh30V">···</b></div>
+        <div class="rh-body">
+          <div class="rh-row"><span>7天</span><b id="kRh7V">···</b></div>
+          <div class="rh-row"><span>30天</span><b id="kRh30V">···</b></div>
+        </div>
       </div>
     </section>
 
@@ -278,7 +281,7 @@
       <div class="method-foot">为什么不看总交易量：0.01% / 0.05% 低费池抽取 1/4，0.3% / 1% 高费池与 v2 抽取 1/6；同样交易量对协议收入的贡献可能相差数十倍。结论严格由"收益率档位 × 收入方向"矩阵得到。</div>
     </section>
 
-    <footer class="src">数据源　<b>DeFiLlama · dailyRevenue</b>　<b>CoinGecko · UNI 市场数据</b></footer>
+    <footer class="src">数据源　<b>DeFiLlama · dailyRevenue</b>　<b>CoinMarketCap · UNI 市场数据</b></footer>
   </div>
 </div>
 
