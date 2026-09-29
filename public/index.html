@@ -66,7 +66,8 @@
     position: absolute; top: -5px; bottom: -5px; width: 4px; margin-left: -2px;
     background: #1c2333; border-radius: 2px;
   }
-  .gauge-labels { display: flex; justify-content: space-between; color: #8d99ad; font-size: 12px; }
+  .gauge-labels { position: relative; height: 18px; color: #8d99ad; font-size: 12px; }
+  .gauge-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 
   /* 图表卡 */
   .chart-head { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -190,7 +191,7 @@
         <div class="gauge-val" id="gVal">···</div>
       </div>
       <div class="gauge-bar"><div class="gauge-tick" id="gTick"></div></div>
-      <div class="gauge-labels"><span>0%</span><span>2% 偏贵</span><span>4% 便宜</span><span>6%+</span></div>
+      <div class="gauge-labels"><span style="left:0;transform:none">0%</span><span style="left:30%">2% 偏贵</span><span style="left:63.5%">4% 便宜</span><span style="left:100%;transform:translateX(-100%)">6%+</span></div>
     </section>
 
     <section class="card">
@@ -269,22 +270,6 @@
         <div class="div-note" id="pNote"></div>
       </section>
     </div>
-
-    <section class="card">
-      <div class="sec-label">判断方法</div>
-      <div class="sec-title">只看两件事</div>
-      <div class="method-grid">
-        <div>
-          <h4>1 · 收益率档位</h4>
-          <p>主收益率 = 30天日协议收入 × 365 ÷ FDV。2% 以下偏贵，4% 起进入更便宜区。FDV 按现价 ×（10亿 − 总销毁量）计算，总销毁含 UNIfication 国库一次性销毁 1 亿枚；收入累计销毁为估算（日收入 ÷ 当日 UNI 价）。</p>
-        </div>
-        <div>
-          <h4>2 · 收入方向</h4>
-          <p>7天均值比30天均值高 5% 以上为"在涨"，低 5% 以上为"在跌"，中间为"走平"。</p>
-        </div>
-      </div>
-      <div class="method-foot">为什么不看总交易量：0.01% / 0.05% 低费池抽取 1/4，0.3% / 1% 高费池与 v2 抽取 1/6；同样交易量对协议收入的贡献可能相差数十倍。结论严格由"收益率档位 × 收入方向"矩阵得到。</div>
-    </section>
 
     <footer class="src">数据源　<b>DeFiLlama · dailyRevenue</b>　<b>CoinMarketCap · UNI 市场数据</b></footer>
   </div>
