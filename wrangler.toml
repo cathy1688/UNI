@@ -1,9 +1,8 @@
-name = "uni-dashboard"
+name = "uni"
 main = "src/index.js"
 compatibility_date = "2026-09-29"
 
-# 部署前替换为你自己的 Cloudflare 账号 ID（wrangler login 后也可删掉本行使用默认账号）
-account_id = "PLACEHOLDER_ACCOUNT_ID"
+account_id = "26fbb58220125144d2d1af3a4ae922bb"
 
 # 每小时整点触发 scheduled handler 刷新快照
 [triggers]
@@ -12,7 +11,7 @@ crons = ["0 * * * *"]
 # KV：缓存每小时抓取的数据快照（key = "snapshot"）
 [[kv_namespaces]]
 binding = "CACHE"
-id = "PLACEHOLDER_KV_ID"
+id = "ed5269b343f24cfbb3eb7216edda5128"
 
 # 静态资源目录（wrangler 最新规范）：public/ 下的 index.html 等由 Worker 托管
 [assets]
