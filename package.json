@@ -1,1 +1,1 @@
-{"description":"UNI 动态监控面板（Cloudflare Worker + KV + Cron，每小时刷新）","devDependencies":{"wrangler":"^3"},"name":"uni-dashboard","private":true,"scripts":{"deploy":"wrangler deploy","dev":"wrangler dev"},"type":"module","version":"1.0.0"}
+{"description":"UNI 动态监控面板（Cloudflare Worker + KV + Cron，每小时刷新）","devDependencies":{"wrangler":"^3"},"name":"uni","private":true,"scripts":{"deploy":"wrangler deploy","dev":"wrangler dev"},"type":"module","version":"1.0.0"}
